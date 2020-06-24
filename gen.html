@@ -1,0 +1,203 @@
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/stellar-base/3.0.3/stellar-base.js"></script>-->
+
+<script src="stellar-sdk-3.0.3.js"></script>
+
+<script>
+  //document.onload = function(){
+  function popupWindow(url, title, win, w, h) {
+    const y = win.top.outerHeight / 2 + win.top.screenY - ( h / 2);
+    const x = win.top.outerWidth / 2 + win.top.screenX - ( w / 2);
+    var w = win.open(url, title, `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${y}, left=${x}`);
+    
+    return w;
+}
+  
+  
+  function genVanityAddress(){
+    
+    var msg_div = document.getElementById("message");
+    var err_div = document.getElementById("err");
+    var tries_div = document.getElementById('num_tries');
+    var end = document.getElementById('end').checked;
+    
+    var needles = document.getElementById("vanity").value.split(", ");
+    window.alert('Starting search, this may take a while... Click to continue.');
+    //var w = window.open('','','width=200,height=100')
+    
+    /*
+    setTimeout(function() {
+    var w = popupWindow("", "", window, 200, 100);
+    w.document.write('Starting search, this may take a while...')
+    w.focus()
+    
+    setTimeout(function() {w.close();}, 3000)
+    
+    }, 100)
+    */
+
+
+    //window.alert('Starting search, this may take a while...');
+    console.log(needles);
+    var num_needles = needles.length;
+    
+    err_div.innerHTML = '';
+    
+    if(!end){
+        for(i = 0; i < num_needles; i++){
+            if(needles[i].substring(0, 1) != 'a' && needles[i].substring(0, 1) != 'b' && needles[i].substring(0, 1) != 'c' && needles[i].substring(0, 1) != 'd'){
+                err_div.innerHTML = 'Aborting: The string(s) you have provided do not begin with A, B, C, or D. Since you have checked the "start" option, the string(s) will not be able to be discovered.';
+                throw new Error("Stop script");
+            }
+        }
+    }
+    
+    /*
+    if(needles[0].length === 5) {
+      msg_div.innerHTML = 'Warning: The string you provided is 5 characters this might take a while...';
+    }
+
+    if(needles[0].length === 6) {
+      msg_div.innerHTML = 'Warning: The string you provided is 6 characters, it might take days to find your keypair.';
+    }
+    */
+
+    if(needles[0].length >= 7) {
+      err_div.innerHTML = 'Aborting: The string you provided is 7 characters or longer, it will take too long to find your key.';
+      throw new Error("Stop script");
+    }
+    
+    if(end){
+        msg_div.innerHTML +=  '<br /><br />Trying to find public key ending with: ' + needles[0] + '...';
+    } else{
+        msg_div.innerHTML +=  '<br /><br />Trying to find public key starting with: ' + needles[0] + '...';
+    }
+    
+    
+    document.getElementById("secret").innerHTML += "<br />";
+    document.getElementById("public").innerHTML += "<br />";
+    
+    
+    
+    var needle = document.getElementById("vanity").value;
+    console.log(needle);
+    // start check
+    //var found = false;
+    var search = {found: false, num_tries: 0, pair_num: 0, needles: needles};
+    var delay = 10;
+    
+    while(!search.found){
+        //console.log(search);
+        keys = StellarBase.Keypair.random();
+        //console.log(keys.publicKey());
+        
+        pub = keys.publicKey();
+        
+        if(end){
+            
+            for(i = 0; i < num_needles; i++){
+            
+            //setTimeout(function(search, i){
+            //console.log(search);
+            //console.log(i);
+                if(pub.substring(pub.length - search.needles[i].length, pub.length).toLowerCase().indexOf(search.needles[i].toLowerCase()) > -1){
+                    search.pair_num = search.pair_num + 1;
+                    
+                    if(i == 0){
+                        search.found = true;
+                        document.getElementById("secret").innerHTML += "<br /><span style='color: red'>" + search.pair_num + ") " + keys.secret() + "</span>";
+                        document.getElementById("public").innerHTML += "<br /><span style='color: red'>" + search.pair_num + ") " + keys.publicKey() + "</span>";
+                    } else{
+                        document.getElementById("secret").innerHTML += "<br />" + search.pair_num + ") " + keys.secret();
+                        document.getElementById("public").innerHTML += "<br />" + search.pair_num + ") " + keys.publicKey();
+                    }
+                }
+                //}, delay);
+                
+            }
+        } else{
+            for(i = 0; i < num_needles; i++){
+            //setTimeout(function(search, i){
+                if(pub.substring(1, 1 + search.needles[i].length).toLowerCase().indexOf(search.needles[i].toLowerCase()) > -1){
+                    search.pair_num = search.pair_num + 1;
+                    
+                    if(i == 0){
+                        search.found = true;
+                        document.getElementById("secret").innerHTML += "<br /><span style='color: red'>" + search.pair_num + ") " + keys.secret() + "</span>";
+                        document.getElementById("public").innerHTML += "<br /><span style='color: red'>" + search.pair_num + ") " + keys.publicKey() + "</span>";
+                    } else{
+                        document.getElementById("secret").innerHTML += "<br />" + search.pair_num + ") " + keys.secret();
+                        document.getElementById("public").innerHTML += "<br />" + search.pair_num + ") " + keys.publicKey();
+                    }
+                }
+                //}, delay);
+            }
+        }
+        
+        search.num_tries = search.num_tries + 1;
+        
+        //tries_div.innerHTML =  'Num attempts: ' + num_tries;
+    }
+    
+    msg_div.innerHTML += ' Num attempts to find keypair: ' + search.num_tries;
+    
+  }
+  
+  /*
+  console.log(StellarBase);
+  keys = StellarBase.Keypair.random();
+  console.log(keys.publicKey());
+  console.log(keys.secret());
+  */
+  
+//const KeyPair = require('@kinecosystem/kin-sdk-node').KeyPair;
+
+//const newKeyPair = KeyPair.generate();
+
+
+// https://friendbot.kinexplorer.com/api/Create/GB7YZGUMH2XYOHWBHUY7PICP7ARUXLNNFVJZYL2VDOQTK2UVWLRAYACK
+
+//console.log(newKeyPair);
+// GB7YZGUMH2XYOHWBHUY7PICP7ARUXLNNFVJZYL2VDOQTK2UVWLRAYACK
+// SDL4Q6AXGJFXGGJZGLQB6554TKIKV2LCAI27RRCDY6K4WCALAIFVYDPK
+
+//};
+
+</script>
+
+
+<div id="err" style="color: red;"></div>
+<br />
+<div id="message"></div>
+<br /><div id="num_tries"></div>
+<br />
+<div id="message1">Enter your desired string, and press the button to find the keypair. The string will be at the end of the public key.
+<br />
+This will lock up your browser during the duration of the search.
+<br />A search with 5 characters will take a while (hours), 6 may take days.
+<br />
+<br />
+To conduct multiple searches at the same time, separate the entries with a comma and a space. 
+<br />The first item will end the search upon discovery, so make sure it is the longest one! eg: bird, cat, dog
+<br /> Please note: If the first key is not found, you will not get the other keys. There will be potentially many matches for the other search terms.</div>
+<br /><br />
+<input id="vanity" type="text"></input>
+<br /><br />
+<input type="radio" id="start" name="type" value="start">
+<label for="start">Beginning (After leading G, must begin with A, B, C, or D)</label>
+<br />
+<input type="radio" id="end" name="type" value="end" checked=1>
+<label for="end">End</label>
+<br /><br />
+
+<button type="button" id="submitButton" onclick="genVanityAddress();">Click to start</button>
+<br /><br />
+
+<b>Keys</b>
+<div style="width: 100px;">
+<hr>
+</div>
+Public: <div id="public"></div>
+<br />
+Private: <div id="secret"></div>
+
+
